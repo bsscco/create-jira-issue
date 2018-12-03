@@ -227,17 +227,7 @@ function makeTemplateAddEditDlgPayload(template) {
                 label: '양식',
                 name: 'form',
                 hint: '슬래시(/)로 구분된 값은 하나만 선택, 쉼표(,)로 구분된 값은 여러 개 입력 가능',
-                value: template != null ? stringify(template.form) : stringify({
-                    'summary': '',
-                    'description': '',
-                    'labels': ['Label1', 'Label2'],
-                    'issuetype': 'Epic/Story/Task',
-                    'priority': 'Highest/High/Medium/Low/Lowest',
-                    'components': ['ABTest', 'Android', 'CTI', 'Data', 'Design', 'Growth', 'Interrupt', 'iOS', 'Plan', 'Private', 'QA', 'Server', 'Study', 'Web'],
-                    'status': 'BACKLOG/CONSIDER/IN PROCESS/READY FOR PLAN/READY FOR DESIGN/READY FOR BACKEND/READY FOR FRONT/READY FOR QA/READY FOR COLLET/READY FOR ANALYZE',
-                    'assignee': '듀공/미농/제이슨/이본/미나/진식/해옥/효/끼로/자넷/비스코/루뽀/베인/스프',
-                    'watchers': ['듀공', '미농', '제이슨', '이본', '미나', '진식', '해옥', '효', '끼로', '자넷', '비스코', '루뽀', '베인', '스프']
-                }),
+                value: template != null ? stringify(template.form) : stringify(config.default_template),
                 optional: false
             }
         ]
@@ -245,7 +235,7 @@ function makeTemplateAddEditDlgPayload(template) {
     return json;
 }
 
-function  makeTemplateUseDlgPayload(priorities, templates, channelId, msg, msgTs) {
+function makeTemplateUseDlgPayload(priorities, templates, channelId, msg, msgTs) {
     let summary = '';
     let description = '';
     if (msg) {
