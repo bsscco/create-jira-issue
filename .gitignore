@@ -2,4 +2,6 @@
 node_modules/
 config.json
 data_schema.json
+data_schema.js
 package-lock.json
+templates-db.json

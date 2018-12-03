@@ -1,18 +1,20 @@
 {
-  "name": "jiraint",
+  "name": "create-jira-issue",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "ssh": "sudo gcloud compute ssh instance-1",
-    "deploy": "sudo gcloud compute scp --recurse *.json *.js *.sh instance-1:/home/bsscco/jiraint"
+    "deploy": "sudo gcloud compute scp --recurse app.js config.json package.json *.js *.sh instance-1:/home/bsscco/create-jira-issue"
   },
   "author": "bsscco@gmail.com",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.18.0",
     "body-parser": "^1.18.3",
-    "express": "^4.16.4"
+    "express": "^4.16.4",
+    "json-stringify-pretty-compact": "^1.2.0",
+    "node-json-db": "^0.9.1"
   }
 }

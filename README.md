@@ -1,5 +1,5 @@
-# jiraint
-지라 통합
+# create-jira-issue
+지라 이슈 템플릿으로 만들기
 
 ### 기술 및 환경
 WebStorm, Node, Express, Axios, GCP Compute Engine, crontab, Slack API, Jira API
@@ -8,7 +8,7 @@ WebStorm, Node, Express, Axios, GCP Compute Engine, crontab, Slack API, Jira API
 ```
 $ chmod 777 chkproc.sh
 $ crontab -e
-$ * * * * * /home/bsscco/jiraint/chkproc.sh > /home/bsscco/jiraint/crontab-chkproc.log 2>&1
+$ * * * * * /home/bsscco/create-jira-issue/chkproc.sh > /home/bsscco/create-jira-issue/crontab-chkproc.log 2>&1
 ```
 
 ### crontab 예약
