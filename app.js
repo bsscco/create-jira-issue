@@ -71,7 +71,73 @@ app.post('/interact', (req, res) => {
     else if (body.callback_id === 'use_template') {
         useTemplate(body.user.id, body.submission.template, body.response_url, body.submission.summary, body.submission.description, body.submission.priority);
     }
+    else if (body.callback_id === 'msg_action:bsscco_new_bug_issue') {
+        createBssccoJiraIssue(body.user.id, {
+            summary: body.message.text,
+            channel: body.channel.id,
+            threadTs: body.message.thread_ts ? body.message.thread_ts : body.message.ts,
+            issuetype: 'Bug',
+            priority: 'Highest'
+        });
+    }
+    else if (body.callback_id === 'msg_action:bsscco_new_issue') {
+        createBssccoJiraIssue(body.user.id, {
+            summary: body.message.text,
+            channel: body.channel.id,
+            threadTs: body.message.thread_ts ? body.message.thread_ts : body.message.ts,
+            issuetype: 'Task',
+            priority: 'Medium'
+        });
+    }
 });
+
+function createBssccoJiraIssue(bssccoSlackUserId, form) {
+    let setCookie = '';
+    let bssccoSlackUser;
+    let createdIssueKey;
+    loginJira()
+        .then(res => {
+            setCookie = res.headers['set-cookie'].join(';');
+            return getSlackJiraUsers(setCookie);
+        })
+        .then(res => {
+            for (const key in res) {
+                if (res[key].slackUser.id === bssccoSlackUserId) {
+                    bssccoSlackUser = res[key];
+                    break;
+                }
+            }
+            return getIssuetypes(setCookie);
+        })
+        .then(res => {
+            form.issuetypes = res.data;
+            return getPriorities(setCookie);
+        })
+        .then(res => {
+            form.priorities = res.data;
+            return getComponents(setCookie);
+        })
+        .then(res => {
+            form.components = res.data;
+            return createIssue(setCookie, makeCreateBssccoIssuePayload(bssccoSlackUser, form));
+        })
+        .then(res => {
+            createdIssueKey = res.data.key;
+            return doIssueTransition(setCookie, createdIssueKey, makeBssccoIssueTransitionPayload());
+        })
+        .then(res => {
+            return sendMsg(null, makeBssccoIssueCreatedMsgPayload(createdIssueKey, form));
+        })
+        .then(res => console.log(res.data))
+        .catch(err => {
+            console.log(err.toString());
+            try {
+                console.log(JSON.stringify(err.response.data.errors));
+            } catch (e) {
+                // Ignore.
+            }
+        });
+}
 
 function useTemplate(userId, temName, responseUrl, summary, description, priority) {
     let setCookie = '';
@@ -305,6 +371,15 @@ function makeIssueCreatedMsgPayload(issueKey) {
     return json;
 }
 
+function makeBssccoIssueCreatedMsgPayload(issueKey, form) {
+    const json = {
+        channel: form.channel,
+        thread_ts: form.threadTs,
+        text: 'new issue : ' + config.jira.server_domain + '/browse/' + issueKey
+    };
+    return json;
+}
+
 function sendTemplateListMsg(userId, responseUrl) {
     const templates = getDbTemplates(userId);
     sendMsg(responseUrl, makeTemplateListMsgPayload(templates))
@@ -313,7 +388,7 @@ function sendTemplateListMsg(userId, responseUrl) {
 }
 
 function sendMsg(responseUrl, payload) {
-    payload.as_user = true;
+    // payload.as_user = true;
     return axios
         .post(responseUrl ? responseUrl : 'https://slack.com/api/chat.postMessage', JSON.stringify(payload), {
             headers: {
@@ -526,6 +601,32 @@ function makeCreateIssuePayload(userId, issuetypes, priorities, components, form
     return json;
 }
 
+function makeCreateBssccoIssuePayload(bssccoSlackUser, form) {
+    const json = {
+        "fields": {
+            "project": {"id": "10400"/*OK-KANBAN*/},
+            "issuetype": {"id": form.issuetypes.find(t => t.name === form.issuetype).id},
+            "summary": '[Android]' + form.summary,
+            "assignee": {"name": bssccoSlackUser.jiraUser.name},
+            "reporter": {"name": bssccoSlackUser.jiraUser.name},
+            "priority": {"id": form.priorities.find(p => p.name === form.priority).id},
+            "description": '\nh2. 슬랙 메시지 링크 \n\n' + config.slack.domain + '/archives/' + form.channel + '/p' + form.threadTs.replace('.', ''),
+            "components": [{"id": form.components.find(c => c.name === 'Android').id}],
+            "labels": ['-'],
+            "customfield_10904": [{'name': bssccoSlackUser.jiraUser.name}]
+        }
+    };
+    console.log(JSON.stringify(json));
+    return json;
+}
+
+function makeBssccoIssueTransitionPayload() {
+    const json = {
+        "transition": {id: '61'/*READY_FOR_FRONT*/}
+    };
+    return json;
+}
+
 function makeIssueTransitionPayload(platform) {
     const json = {
         "transition": platform.transition + ""
@@ -541,3 +642,11 @@ app.listen(PORT, () => {
     console.log(`App listening on port ${PORT}`);
     console.log('Press Ctrl+C to quit.');
 });
+
+// createBssccoJiraIssue('U7FUJR36D', {
+//     summary: 'dwdwdwdwdwd',
+//     channel: 'D7GC4C77D',
+//     theadTs: '1545104927.000200',
+//     issuetype: 'Task',
+//     priority: 'Medium'
+// });
