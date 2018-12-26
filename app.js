@@ -606,7 +606,7 @@ function makeCreateBssccoIssuePayload(bssccoSlackUser, form) {
         "fields": {
             "project": {"id": "10400"/*OK-KANBAN*/},
             "issuetype": {"id": form.issuetypes.find(t => t.name === form.issuetype).id},
-            "summary": '[Android]' + form.summary,
+            "summary": '[Android]' + form.summary.replace(/\n/g, ' ').substr(0, 100),
             "assignee": {"name": bssccoSlackUser.jiraUser.name},
             "reporter": {"name": bssccoSlackUser.jiraUser.name},
             "priority": {"id": form.priorities.find(p => p.name === form.priority).id},
