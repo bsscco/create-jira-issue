@@ -464,8 +464,8 @@ function getSlackJiraUsers(setCookie) {
             slackUsers = res;
             return getJiraUsers(setCookie);
         })
-        .then(res => {
-            jiraUsers = res.data.values;
+        .then(jiraUsers => {
+            jiraUsers = jiraUsers;
 
             const slackJiraUsers = {};
             slackUsers.forEach(slackUser => {
@@ -503,16 +503,31 @@ function loginJira() {
     );
 }
 
-function getJiraUsers(setCookie) {
-    return axios.get(config.jira.server_domain + '/rest/api/2/group/member?groupname=jira-software-users',
-        {
-            headers: {
-                'Cookie': setCookie,
-                'Content-Type': 'application/json'
+function getJiraUsers(setCookie, startAt, jiraUsers) {
+    if (startAt == null) {
+        startAt = 0
+    }
+    if(jiraUsers == null) {
+        jiraUsers = []
+    }
+    return axios
+        .get(config.jira.server_domain + '/rest/api/2/group/member?groupname=jira-software-users&maxResults=50&startAt=' + startAt,
+            {
+                headers: {
+                    'Cookie': setCookie,
+                    'Content-Type': 'application/json'
+                }
             }
-        }
-    );
+        )
+        .then(res => {
+            if (res.data.isLast === false) {
+                return getJiraUsers(setCookie, startAt + 50, jiraUsers.concat(res.data.values));
+            } else {
+                return new Promise(resolve => resolve(jiraUsers.concat(res.data.values)));
+            }
+        });
 }
+
 
 function getIssuetypes(setCookie) {
     return axios.get(config.jira.server_domain + '/rest/api/2/issuetype', {
@@ -551,7 +566,7 @@ function createIssue(setCookie, data) {
 }
 
 function doIssueTransition(setCookie, issueKey, data) {
-    return axios.post(config.jira.server_domain + '/rest/api/2/issue/' + issueKey + '/transitions', JSON.stringify(data), {
+        return axios.post(config.jira.server_domain + '/rest/api/2/issue/' + issueKey + '/transitions', JSON.stringify(data), {
         headers: {
             'Cookie': setCookie,
             'Content-Type': 'application/json'
@@ -622,7 +637,7 @@ function makeCreateBssccoIssuePayload(bssccoSlackUser, form) {
 
 function makeBssccoIssueTransitionPayload() {
     const json = {
-        "transition": {id: '61'/*READY_FOR_FRONT*/}
+        "transition": {id: '601'/*TODO*/}
     };
     return json;
 }
